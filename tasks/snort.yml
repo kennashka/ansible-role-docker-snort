@@ -1,0 +1,108 @@
+#########################################################################################################
+#Author: Kennashka DeSilva
+#kennashka@hactopia.com
+#2021
+########################################################################################################
+
+---
+- hosts: addyourhost # host for installation of ec2, snort and docker.
+  remote_user: ubuntu
+  become: yes
+  vars_files:
+    - vars/default.yml  
+
+# test this
+
+  tasks:
+     - name: create ec2
+      ec2:
+         key_name: yourkey.pem
+         instance_type: t2.micro
+         image: ami-0c55b159cbfafe1f0
+         wait: yes
+         group_id: sg-00719e5c02bb7fac7
+         count: 1
+         count_tag:
+            Name: Test
+         vpc_subnet_id: subnet-4cafd936
+         assign_public_ip: yes
+      register: ec2
+
+# create it
+
+    - name: Install Docker
+      file: path="{{ app_directory_path }}/sslcert" state=directory
+
+# install snort
+
+
+#automatically add snort configuration file.
+
+    - name: Upgrade system
+      apt: upgrade=dist update_cache=yes
+
+    - name: Install common files for software
+      apt: name=software-properties-common state=latest
+
+    - name: Add source repo
+      apt_repository: repo=ppa:certbot/certbot
+
+    - name: Update system
+      apt: update_cache=yes
+
+    - name: Install certbot
+      apt: name=certbot state=latest
+
+    - name: Done, run command nmap
+      command: certbot certonly --webroot -w {{ app_directory_path }}/public -m {{ letsencrypt_email }} --agree-tos -d {{ domain_name }} -d {{ domain_name2 }}
+
+
+    - name: Move letsencrypt cert files to cert folder
+      command: cp /etc/letsencrypt/live/{{ domain_name }}/fullchain.pem /etc/letsencrypt/live/{{ domain_name }}/privkey.pem {{ app_directory_path }}/sslcert
+
+    - name: Install required npm packages
+      command: npm install express-force-ssl
+      args:
+        chdir: "{{ app_directory_path }}/"
+
+    - name: Install required npm packages
+      command: npm install helmet --save
+      args:
+        chdir: "{{ app_directory_path }}/"
+
+    - name: Update app.js file to use https module and cert file path
+      blockinfile:
+        path: "{{ app_directory_path }}/app.js"
+        insertafter: "require"
+        state: present
+        marker: "// Added Path to cert files and npm module variables"
+        backup: yes
+        content: |
+          const options = {
+              cert: fs.readFileSync('{{ app_directory_path }}/sslcert/fullchain.pem'),
+              key: fs.readFileSync('{{ app_directory_path }}/sslcert/privkey.pem')
+          };
+          app.use(require('helmet')());
+          app.use(forceSSL);
+    - name: Update app.js file to use https module
+      blockinfile:
+        path: "{{ app_directory_path }}/app.js"
+        state: present
+        insertbefore: BOF
+        marker: "// New NPM Module Variables"
+        backup: yes
+        content: |
+          var https = require('https');
+          var forceSSL = require('express-force-ssl');
+          var fs = require('fs');
+    - name: Add new lines where app should listen from app.js
+      blockinfile:
+        path: "{{ app_directory_path }}/app.js"
+        state: present
+        insertafter: EOF
+        marker: "// Https server line"
+        backup: yes
+        content: |
+          https.createServer(options, app).listen(443);
+    - name: Restart Node App Server
+      command: "forever restart {{ app_directory_path }}/app.js"

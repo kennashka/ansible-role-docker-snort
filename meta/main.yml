@@ -1,0 +1,15 @@
+galaxy_info:
+  author: Kennashka DeSilva
+  description: "Ansible Role to install EC2 with snort docker image"
+  company: "Hactopia, LLC"
+  license: "license (BSD, MIT)"
+  min_ansible_version: 2.4
+  platforms:
+    - name: Ubuntu
+      versions:
+        - all
+  galaxy_tags:
+    - networking
+    - system
+  
+    
