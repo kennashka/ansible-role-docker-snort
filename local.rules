@@ -1,1 +1,35 @@
 
+
+# ----------------
+# LOCAL RULES
+# ----------------
+# This file intentionally does not come with signatures.  Put your local
+# additions here.
+
+# Identify NMAP Ping Scan
+# alert icmp any any -> 172.31.33.156 any (msg: "This is proof that it works."; dsize:0;sid:10000004; rev: 1;)
+
+# Identify NMAP TCP Scan
+# alert tcp any any -> 172.31.33.156  22 (msg: "NMAP TCP Scan";sid:10000005; rev:2; )
+
+# Identify NMAP XMAS Scan
+# alert tcp any any -> 172.31.43.202 22 (msg:"Nmap XMAS Tree Scan"; flags:FPU; sid:1000006; rev:1; )
+
+# Identify NMAP FIN Scan
+# alert tcp any any -> 172.31.43.202 22 (msg:"Nmap FIN Scan"; flags:F; sid:1000008; rev:1;)
+
+# Identify NMAP NULL Scan
+# alert tcp any any -> 172.31.43.202 22 (msg:"Nmap NULL Scan"; flags:0; sid:1000009; rev:1; )
+
+# Identify NMAP UDP Scan
+# alert udp any any -> 172.31.43.202 any ( msg:"Nmap UDP Scan"; sid:1000010; rev:1; )
+
+# Alert for FTP traffic
+# alert tcp any any -> 172.31.43.202 21 ( msg:"FTP traffic"; sid:1000002; rev:1; )
+
+# Alert for terrorism in content outgoing
+# alert tcp any any -> any any ( msg:"TRIGGERED"; sid:5000000; content:"_terrorism_"; rev:1; )
+
+# Implement rules to detect SQL injection and Cross Site Scripting (XSS) attacks
+# alert tcp any any -> any 80 (msg: "Error Based SQL Injection Detected"; content: "%27" ; sid:100000011; )
+# alert tcp any any -> any 80 (msg: "Error Based SQL Injection Detected"; content: "22" ; sid:100000012; )
